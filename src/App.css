@@ -1,5 +1,8 @@
+@import url("https://fonts.googleapis.com/css2?family=Libre+Franklin&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Libre+Franklin&family=Noto+Serif:wght@700&display=swap");
 .App {
   text-align: center;
+  background-color: #282c34;
 }
 
 .App-logo {
@@ -35,4 +38,29 @@
   to {
     transform: rotate(360deg);
   }
+}
+
+.gradient {
+  background-color: #61dafb;
+  background-image: linear-gradient(90deg, #078a3b 0%, #582fc1 100%);
+}
+
+.effect {
+  height: 500px;
+  width: 400px;
+  transition: transform 0.3s ease-out;
+}
+
+effect:hover {
+  transform: scale(1.2);
+}
+
+.hdg1 {
+  font-family: "Noto Serif", serif;
+  color: rgb(233, 229, 237);
+}
+
+.hdg3 {
+  font-family: "Libre Franklin", sans-serif;
+  color: rgb(167, 166, 165);
 }
