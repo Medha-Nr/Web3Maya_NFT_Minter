@@ -5,6 +5,9 @@ import Button from "react-bootstrap/Button";
 import Web3 from "web3";
 import axios from "axios";
 import { createAlchemyWeb3 } from "@alch/alchemy-web3";
+import Web3Modal from "web3modal";
+import WalletConnectProvider from "@walletconnect/web3-provider";
+import WalletLink from "walletlink";
 
 const ABI = [
   {
@@ -635,6 +638,35 @@ const nftjpg =
 const ADDRESS = "0xE3ed764F8E4c4Fa52334b988De2D207E349dCCB4";
 const apikey = "EWM3UF6W1U6ATNT7W2NS2JCSQXATG5RB51";
 const endpoint = "https://api-testnet.polygonscan.com/api";
+const providerOptions = {
+  binancechainwallet: {
+    package: true,
+  },
+  walletconnect: {
+    package: WalletConnectProvider,
+    options: {
+      infuraId: "4f8f46b28b884408b3c898cce5ed8080",
+    },
+  },
+  walletlink: {
+    package: WalletLink,
+    options: {
+      appName: "NFT Minter",
+      infuraId: "4f8f46b28b884408b3c898cce5ed8080",
+      rpc: "",
+      chainId: 80001,
+      appLogoUrl: null,
+      darkmode: true,
+    },
+  },
+};
+
+const web3Modal = new Web3Modal({
+  network: "rinkeby",
+  theme: "dark",
+  cacheProvider: true,
+  providerOptions,
+});
 
 const Web3Alc = createAlchemyWeb3(
   "https://polygon-mumbai.g.alchemy.com/v2/lrNiRI8GTwDaGih3yBTNNr9OwaNY_I4g"
@@ -642,39 +674,33 @@ const Web3Alc = createAlchemyWeb3(
 
 //function connecting our wallet to the website to mint NFTs - using web3.js
 async function connectWallet() {
-  if (window.ethereum) {
-    var web3 = new Web3(window.ethereum);
-    await window.ethereum.send("eth_requestAccounts");
-    var accounts = await web3.eth.getAccounts();
-    account = accounts[0];
-    document.getElementById("wallet-address").textContent = accounts;
+  var provider = await web3Modal.connect();
+  var web3 = new Web3(provider);
+  await window.ethereum.send("eth_requestAccounts");
+  var accounts = await web3.eth.getAccounts();
+  account = accounts[0];
+  document.getElementById("wallet-address").textContent = accounts;
 
-    contract = new web3.eth.Contract(ABI, ADDRESS);
-  }
+  contract = new web3.eth.Contract(ABI, ADDRESS);
 }
 
 async function mint() {
-  if (window.ethereum) {
-    var _mintAmount = Number(document.querySelector("[name=amount]").value);
-    var mintRate = Number(await contract.methods.cost().call());
-    var totalAmount = mintRate * _mintAmount;
-    await Web3Alc.eth.getMaxPriorityFeeFromGas().then((tip) => {
-      Web3Alc.eth.getBlock("pending").then((block) => {
-        var baseFee = Number(block.baseFeePerGas);
-        var maxPriority = Number(tip);
-        var maxFee = baseFee + maxPriority;
-        contract.methods.mint(account, _mintAmount).send({
-          from: account,
-          value: String(totalAmount),
-          maxFeePerGas: maxFee,
-          maxPriorityFeePerGas: maxPriority,
-        });
+  var _mintAmount = Number(document.querySelector("[name=amount]").value);
+  var mintRate = Number(await contract.methods.cost().call());
+  var totalAmount = mintRate * _mintAmount;
+  await Web3Alc.eth.getMaxPriorityFeeFromGas().then((tip) => {
+    Web3Alc.eth.getBlock("pending").then((block) => {
+      var baseFee = Number(block.baseFeePerGas);
+      var maxPriority = Number(tip);
+      var maxFee = baseFee + maxPriority;
+      contract.methods.mint(account, _mintAmount).send({
+        from: account,
+        value: String(totalAmount),
+        maxFeePerGas: maxFee,
+        maxPriorityFeePerGas: maxPriority,
       });
     });
-    contract.methods
-      .mint(account, _mintAmount)
-      .send({ from: account, value: String(totalAmount) });
-  }
+  });
 }
 
 class App extends Component {
@@ -685,7 +711,6 @@ class App extends Component {
       nftdata: [],
     };
   }
-  //2nd endpoint slightly working. first not working at all. both are wrong
 
   async componentDidMount() {
     await axios
@@ -738,7 +763,6 @@ class App extends Component {
               }}
             >
               <h4 style={{ color: "#d8d3d3", marginTop: "10px" }}>
-                {" "}
                 NFT Minter: Web3Maya Collection{" "}
               </h4>
               <h6 style={{ color: "#c2c1c3", marginBottom: "30px" }}>
